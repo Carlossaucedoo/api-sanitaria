@@ -69,4 +69,15 @@ Códigos: `200`/`201` correcto, `401` sin token o token no válido, `403` sin ro
 
 **Workspace público:** https://www.postman.com/carlossaucedoafonso79-5111385/api-sanitaria
 
-En la carpeta `postman/` están la colección **API Sanitaria** y el entorno **API Sanitaria - Local**. Las peticiones están ordenadas: los logins guardan los tokens en las variables `{{token_paciente}}` y `{{token_medico}}`, y cada petición tiene tests que comprueban el código y la estructura de la respuesta. Se puede ejecutar entera con el *Collection Runner*.
+El workspace (y la carpeta `postman/` del repo) tiene la colección **API Sanitaria** con 23 peticiones en 4 carpetas: públicas, paciente, médico y logout. Incluye también los casos de error (401, 403, 404 y 422).
+
+- Cada petición tiene guardado un **ejemplo con la respuesta real** de la API (pestaña *Examples*), así que se puede ver el resultado sin ejecutar nada.
+- Cada petición tiene **tests** que comprueban el código HTTP y la estructura `success/message/data`.
+- Los logins guardan los tokens en las variables `{{token_paciente}}` y `{{token_medico}}`, así que las peticiones se ejecutan en orden sin copiar tokens a mano.
+
+### Cómo ejecutarla
+
+1. Arrancar la API (ver *Instalación*).
+2. En Postman, hacer *Fork* de la colección y de los entornos, o importar los JSON de `postman/`.
+3. Elegir el entorno **API Sanitaria - artisan serve** (`http://127.0.0.1:8000/api`) o **API Sanitaria - Local** (Herd, `http://api-sanitaria.test/api`).
+4. *Run collection*: pasan las 23 peticiones y los 57 tests.
