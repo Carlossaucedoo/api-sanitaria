@@ -67,6 +67,6 @@ Códigos: `200`/`201` correcto, `401` sin token o token no válido, `403` sin ro
 
 ## Postman
 
-**Workspace público:** https://www.postman.com/carlossaucedoafonso79/workspace/api-sanitaria
+**Workspace público:** https://www.postman.com/carlossaucedoafonso79-5111385/api-sanitaria
 
 En la carpeta `postman/` están la colección **API Sanitaria** y el entorno **API Sanitaria - Local**. Las peticiones están ordenadas: los logins guardan los tokens en las variables `{{token_paciente}}` y `{{token_medico}}`, y cada petición tiene tests que comprueban el código y la estructura de la respuesta. Se puede ejecutar entera con el *Collection Runner*.
