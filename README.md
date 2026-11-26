@@ -81,3 +81,5 @@ El workspace (y la carpeta `postman/` del repo) tiene la colección **API Sanita
 2. En Postman, hacer *Fork* de la colección y de los entornos, o importar los JSON de `postman/`.
 3. Elegir el entorno **API Sanitaria - artisan serve** (`http://127.0.0.1:8000/api`) o **API Sanitaria - Local** (Herd, `http://api-sanitaria.test/api`).
 4. *Run collection*: pasan las 23 peticiones y los 57 tests.
+
+> Si se usa Postman en el navegador, hay que elegir **Desktop Agent** (abajo a la derecha). El *Cloud Agent* manda las peticiones desde los servidores de Postman y no puede llegar a una API que está en local (`Couldn't resolve host`). Con la app de escritorio funciona directamente.
