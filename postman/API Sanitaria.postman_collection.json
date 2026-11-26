@@ -1,0 +1,1321 @@
+{
+    "info": {
+        "_postman_id": "812e0a68-0ff2-5d3d-ae6b-1e1e95982e39",
+        "name": "API Sanitaria",
+        "description": "API de gestión de datos médicos (Laravel). Ejecuta las peticiones en orden: los logins guardan los tokens en las variables de la colección.\n\nUsuarios del seeder (contraseña `password`):\n- medico@salud.test (médico)\n- ana@salud.test (paciente)\n- javier@salud.test (paciente)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Públicas",
+            "item": [
+                {
+                    "name": "Registro de paciente",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.collectionVariables.set('email_registro', 'paciente' + Date.now() + '@salud.test');"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(true);",
+                                    "});",
+                                    "pm.test(\"Se registra siempre como paciente\", () => pm.expect(json.data.rol).to.eql(\"paciente\"));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/registro",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "registro"
+                            ]
+                        },
+                        "description": "Crea un usuario nuevo. Siempre con rol paciente: los médicos solo se crean desde el seeder.",
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Lucía Romero Díaz\",\n    \"email\": \"{{email_registro}}\",\n    \"password\": \"password123\",\n    \"fecha_nacimiento\": \"2001-02-14\",\n    \"peso\": 58.3,\n    \"altura\": 162,\n    \"alergias\": \"Polen\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Registro con datos inválidos (422)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 422\", () => pm.response.to.have.status(422));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(false);",
+                                    "});",
+                                    "pm.test(\"Devuelve los errores de validación\", () => pm.expect(json.data).to.have.keys(\"name\", \"email\", \"password\"));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/registro",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "registro"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Lu\",\n    \"email\": \"no-es-un-email\",\n    \"password\": \"123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login paciente (Ana)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(true);",
+                                    "});",
+                                    "pm.test(\"Devuelve un token\", () => pm.expect(json.data.token).to.be.a(\"string\").and.have.lengthOf(60));",
+                                    "pm.collectionVariables.set(\"token_paciente\", json.data.token);",
+                                    "pm.collectionVariables.set(\"paciente_id\", json.data.user.id);"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        },
+                        "description": "Guarda el token en la variable {{token_paciente}} y el id en {{paciente_id}}.",
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"ana@salud.test\",\n    \"password\": \"password\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login médico",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(true);",
+                                    "});",
+                                    "pm.test(\"Es médico\", () => pm.expect(json.data.user.rol).to.eql(\"medico\"));",
+                                    "pm.collectionVariables.set(\"token_medico\", json.data.token);"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        },
+                        "description": "Guarda el token en la variable {{token_medico}}.",
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"medico@salud.test\",\n    \"password\": \"password\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login con credenciales incorrectas (401)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 401\", () => pm.response.to.have.status(401));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(false);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"ana@salud.test\",\n    \"password\": \"incorrecta\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "2. Paciente (token)",
+            "item": [
+                {
+                    "name": "Consultar mi ficha e historial",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(true);",
+                                    "});",
+                                    "pm.test(\"Incluye datos biométricos e historial\", () => {",
+                                    "    pm.expect(json.data).to.include.keys(\"peso\", \"altura\", \"alergias\", \"historial\");",
+                                    "    pm.expect(json.data.historial).to.be.an(\"array\");",
+                                    "});",
+                                    "pm.test(\"No devuelve la contraseña\", () => pm.expect(json.data).to.not.have.property(\"password\"));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/mi-ficha",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "mi-ficha"
+                            ]
+                        },
+                        "description": "Token en la cabecera Authorization: Bearer.",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_paciente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Consultar mi ficha (token por parámetro)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(true);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/mi-ficha?token={{token_paciente}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "mi-ficha"
+                            ],
+                            "query": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_paciente}}"
+                                }
+                            ]
+                        },
+                        "description": "El token también se puede mandar como parámetro ?token=",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Actualizar mi peso y altura",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(true);",
+                                    "});",
+                                    "pm.test(\"Peso actualizado\", () => pm.expect(json.data.peso).to.eql(61.2));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/mi-ficha",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "mi-ficha"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_paciente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"peso\": 61.2,\n    \"altura\": 166\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Actualizar solo el peso",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(true);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/mi-ficha",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "mi-ficha"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_paciente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"peso\": 60.8\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Actualizar con datos inválidos (422)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 422\", () => pm.response.to.have.status(422));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(false);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/mi-ficha",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "mi-ficha"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_paciente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"peso\": -5\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Sin token (401)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 401\", () => pm.response.to.have.status(401));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(false);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/mi-ficha",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "mi-ficha"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Token no válido (401)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 401\", () => pm.response.to.have.status(401));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(false);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/mi-ficha",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "mi-ficha"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "token-inventado",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "3. Médico (token + rol médico)",
+            "item": [
+                {
+                    "name": "Listar pacientes",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(true);",
+                                    "});",
+                                    "pm.test(\"Devuelve una lista\", () => pm.expect(json.data).to.be.an(\"array\").that.is.not.empty);"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/pacientes",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pacientes"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_medico}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Consultar ficha e historial de un paciente",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(true);",
+                                    "});",
+                                    "pm.test(\"Incluye el historial\", () => pm.expect(json.data.historial).to.be.an(\"array\"));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/pacientes/{{paciente_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pacientes",
+                                "{{paciente_id}}"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_medico}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Añadir entrada al historial",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(true);",
+                                    "});",
+                                    "pm.test(\"La entrada la firma el médico del token\", () => pm.expect(json.data.medico.email).to.eql(\"medico@salud.test\"));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/pacientes/{{paciente_id}}/historial",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pacientes",
+                                "{{paciente_id}}",
+                                "historial"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_medico}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"fecha\": \"2026-11-20\",\n    \"motivo\": \"Tos persistente\",\n    \"diagnostico\": \"Bronquitis aguda\",\n    \"tratamiento\": \"Jarabe antitusivo y reposo durante 7 días\",\n    \"observaciones\": \"Volver si hay fiebre.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Añadir entrada sin datos obligatorios (422)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 422\", () => pm.response.to.have.status(422));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(false);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/pacientes/{{paciente_id}}/historial",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pacientes",
+                                "{{paciente_id}}",
+                                "historial"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_medico}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"motivo\": \"Revisión\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Modificar alergias",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(true);",
+                                    "});",
+                                    "pm.test(\"Alergias actualizadas\", () => pm.expect(json.data.alergias).to.eql(\"Penicilina, ácaros\"));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/pacientes/{{paciente_id}}/alergias",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pacientes",
+                                "{{paciente_id}}",
+                                "alergias"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_medico}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"alergias\": \"Penicilina, ácaros\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Paciente que no existe (404)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 404\", () => pm.response.to.have.status(404));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(false);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/pacientes/9999",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pacientes",
+                                "9999"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_medico}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Paciente intenta entrar en ruta de médico (403)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 403\", () => pm.response.to.have.status(403));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(false);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/pacientes",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pacientes"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_paciente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Paciente intenta modificar alergias (403)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 403\", () => pm.response.to.have.status(403));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(false);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/pacientes/{{paciente_id}}/alergias",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pacientes",
+                                "{{paciente_id}}",
+                                "alergias"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_paciente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"alergias\": \"Ninguna\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Ruta de médico sin token (401)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 401\", () => pm.response.to.have.status(401));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(false);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/pacientes",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "pacientes"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "4. Logout",
+            "item": [
+                {
+                    "name": "Logout paciente",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(true);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/logout",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "logout"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_paciente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Usar el token después del logout (401)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const json = pm.response.json();",
+                                    "pm.test(\"Código 401\", () => pm.response.to.have.status(401));",
+                                    "pm.test(\"Respuesta unificada (success, message, data)\", () => {",
+                                    "    pm.expect(json).to.have.all.keys(\"success\", \"message\", \"data\");",
+                                    "    pm.expect(json.success).to.eql(false);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/mi-ficha",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "mi-ficha"
+                            ]
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_paciente}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://api-sanitaria.test/api"
+        },
+        {
+            "key": "token_paciente",
+            "value": ""
+        },
+        {
+            "key": "token_medico",
+            "value": ""
+        },
+        {
+            "key": "paciente_id",
+            "value": "2"
+        },
+        {
+            "key": "email_registro",
+            "value": ""
+        }
+    ]
+}
